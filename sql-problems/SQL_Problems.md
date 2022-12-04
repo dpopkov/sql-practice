@@ -125,3 +125,44 @@ UNION
 SELECT product_id, name, 'spb', price_spb FROM products
 ORDER BY product_id, city;
 ```
+
+## p7 - Un-pivot table: turn result of the previous query to its original non-turned result
+
+```sql
+-- Create view of pivotted table
+CREATE VIEW pivot AS
+SELECT name, 'mow' AS city, price_mow AS price FROM products
+UNION
+SELECT name, 'spb', price_spb FROM products
+ORDER BY name, city;
+
+-- Solution: GROUP BY + max()
+SELECT name, 
+       max(if(city='mow', price, null)) AS price_mow, 
+       max(if(city='spb', price, null)) AS price_spb 
+FROM pivot 
+GROUP BY name;
+```
+
+## p8 - Select all orders and total number of every user orders
+
+```sql
+-- Using Joins
+SELECT o1.order_id,
+       u.name,
+       count(o2.order_id) as user_orders
+FROM orders o1
+         INNER JOIN orders o2
+              ON o1.user_id = o2.user_id
+         INNER JOIN users u
+              ON o1.user_id = u.user_id
+GROUP BY o1.user_id, o1.order_id;
+
+-- Using PARTITION BY (works in Postgres, but is not working in MySQL 5.7)
+SELECT order_id,
+       u.name,
+       count(order_id) OVER (PARTITION BY o.user_id) AS user_orders
+FROM orders o
+         INNER JOIN users u ON o.user_id = u.user_id;
+```
+
